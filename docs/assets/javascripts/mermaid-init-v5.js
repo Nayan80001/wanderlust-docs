@@ -15,10 +15,8 @@ const renderMermaid = () => {
   return mermaid.run({ nodes: diagrams });
 };
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => {
-    renderMermaid();
-  }, { once: true });
-} else {
+if (document.readyState === "complete") {
   renderMermaid();
+} else {
+  window.addEventListener("load", renderMermaid, { once: true });
 }
