@@ -1,0 +1,57 @@
+:root {
+  --md-primary-fg-color: #163f55;
+  --md-primary-fg-color--dark: #103449;
+  --md-accent-fg-color: #147d78;
+}
+
+[data-md-color-scheme="default"] {
+  --md-default-bg-color: #fff;
+  --md-default-fg-color: #26343d;
+  --md-typeset-a-color: #176f78;
+}
+
+.md-header,
+.md-tabs {
+  background-color: #163f55;
+}
+
+.md-typeset h1,
+.md-typeset h2,
+.md-typeset h3 {
+  color: #173c50;
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: -0.02em;
+}
+
+.md-typeset h1 {
+  font-size: 2.25rem;
+  font-weight: 600;
+}
+
+.md-typeset a.document-screenshot-link {
+  display: block;
+  margin: 1.5rem 0 2rem;
+  padding: 0.75rem;
+  overflow: hidden;
+  border: 1px solid #dce5e9;
+  border-radius: 0.65rem;
+  background: #f7f9fa;
+}
+
+.md-typeset a.document-screenshot-link img {
+  display: block;
+  width: 100%;
+  max-height: none;
+  border: 1px solid #e1e7ea;
+  border-radius: 0.35rem;
+}
+
+.md-typeset table:not([class]) {
+  border: 1px solid #dce5e9;
+  border-radius: 0.5rem;
+}
+
+.md-typeset table:not([class]) th {
+  background: #f2f6f7;
+  color: #173c50;
+}

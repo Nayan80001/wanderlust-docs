@@ -5,7 +5,9 @@ travel-blog project. It documents the architecture and delivery process without 
 credentials, AWS account or instance identifiers, public IP addresses, or private service URLs.
 
 The site is built with [MkDocs Material](https://squidfunk.github.io/mkdocs-material/) and
-published to GitHub Pages.
+published as a public, multi-page website. Share
+[the guide](https://nayan80001.github.io/wanderlust-docs/) directly; readers do not need a GitHub
+account.
 
 ## Preview locally
 

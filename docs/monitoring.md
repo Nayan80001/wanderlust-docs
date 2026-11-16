@@ -1,49 +1,37 @@
-# Monitoring: see what the cluster is doing
+# Monitoring
 
-Monitoring helps answer three questions: **Is it working? Is it getting slower? What happened
-when it stopped working?**
+The monitoring stack helps the team answer three practical questions: Is the application
+responding? Is it getting slower? What do the service logs show?
 
-The stack runs on the existing Kubernetes worker, so it does not add a separate monitoring EC2
-instance.
+| Tool | What it does here |
+|---|---|
+| Prometheus | Collects metrics and evaluates alert rules |
+| Grafana | Shows dashboards and lets operators explore metrics and logs |
+| Loki | Stores application logs for searching |
+| Grafana Alloy | Collects pod logs and Kubernetes events for Loki |
 
-| Tool | Simple explanation | Role in this project |
-|---|---|---|
-| Prometheus | A collector that regularly asks services for numbers | Stores metrics and evaluates alert rules |
-| Grafana | A dashboard for graphs and status panels | Displays Prometheus metrics and Loki logs |
-| Loki | A searchable store for text logs | Keeps pod logs for a limited retention period |
-| Grafana Alloy | A small collector/forwarder | Collects pod logs and Kubernetes events for Loki |
-
-Prometheus also scrapes ingress-nginx request metrics. Grafana uses a private ClusterIP service;
+Prometheus also collects request metrics from ingress-nginx. Grafana is a private cluster service;
 it is not exposed through the public load balancer.
 
-![Grafana overview showing no firing alerts](assets/screenshots/grafana-alert-status.png)
+[![Full Grafana overview showing alert status, request rate, and latency](assets/screenshots/grafana-overview-full.png)](assets/screenshots/grafana-overview-full.png){.document-screenshot-link target=_blank rel=noopener}
 
-*At capture time the overview showed zero firing alerts. That only describes the displayed time
-range; it does not guarantee that the system will never have an alert.*
+*The captured dashboard shows alert status, request rate, and latency. Its private endpoint was removed for publication. The displayed values cover the dashboard's selected time range only.*
 
-## Storage and limits
+## Current limits
 
-The Helm charts use the cluster's existing `local-path` storage class. Prometheus, Loki, Grafana,
-and Alertmanager use small persistent volumes on the worker. Prometheus and Loki retain a limited
-window of data (the project configuration uses seven-day retention).
+This is a lab-sized monitoring setup, not an independent or highly available monitoring service.
+The application and monitoring tools run on the same Kubernetes worker. If that worker stops,
+the website and its monitoring can both be interrupted.
 
-This is a learning/lab setup, not a highly available monitoring platform:
-
-- There is one Kubernetes worker, so its failure can interrupt the application and monitoring.
-- Data is stored on that worker and is not replicated to another node.
+- Metrics and logs use the cluster's existing local-path storage.
+- Prometheus and Loki retain a limited seven-day window.
 - Alert rules are evaluated locally, but no external notification receiver is configured.
 
-## How to explore safely
+An alert visible in Grafana does not by itself notify an on-call person. Production operations
+would need an external notification path, a response owner, and a tested recovery process.
 
-Use the approved SSM port-forwarding instructions from the private deployment guide to access
-Grafana. Retrieve its password from the encrypted parameter store when needed. Do not copy the
-password into Git, a shell transcript, or this public site.
+## Access
 
-In Grafana, start with the overview dashboard, then use Explore to search logs in Loki. Choose a
-namespace or pod label before widening a query so results remain manageable.
-
-## What an alert does
-
-An alert rule is a condition such as “the service has been unavailable for several checks.” A
-firing alert means the condition is currently true. An alert dashboard is useful, but a person
-still needs a notification channel and a response plan for production use.
+Grafana is private. Authorized operators reach it through the documented SSM port-forwarding
+procedure and retrieve its password from the encrypted parameter store. Do not put credentials or
+private service addresses in this guide.

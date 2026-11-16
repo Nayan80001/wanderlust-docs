@@ -1,52 +1,43 @@
-# GitOps and Argo CD: deploy from Git
+# Release and GitOps
 
-CD means **continuous delivery**. This project uses GitOps: instead of asking someone to click
-“deploy” for every release, the desired application version is written in Git and Argo CD keeps
-Kubernetes aligned with it.
+The delivery pipeline does not send an image straight to a running server. It records the
+approved image version in Git, and Argo CD applies that version to Kubernetes.
 
 ## The release path
 
-```text
-App code change
-  -> Jenkins CI tests and scans it
-  -> Docker image is pushed to ECR with a version tag
-  -> Jenkins CD updates only that image tag in GitOps
-  -> Argo CD notices the Git change
-  -> Argo CD applies the Helm chart to Kubernetes
-  -> Jenkins can verify Synced and Healthy
-```
+1. Jenkins finishes the application checks and publishes an image to Amazon ECR.
+2. The GitOps job updates only the changed service's image tag.
+3. Argo CD notices the Git change and applies the Helm chart to Kubernetes.
+4. Jenkins checks Argo CD for **Synced** and **Healthy** status.
 
-The GitOps pipeline checks the supplied tags before changing the chart values. If only the
-frontend changed, it leaves the backend tag alone (and vice versa). It commits and pushes the
-change to the GitOps repository.
+If only the frontend changed, the backend image tag stays as it was, and vice versa.
 
-## Argo CD's job
+## What Argo CD reports
 
-Argo CD watches the configured GitOps branch and Helm chart. Automated sync is enabled, with
-pruning and self-healing:
+- **Synced** means the resources in Kubernetes match the version described in Git.
+- **Healthy** means Argo CD considers the application's resources healthy.
+- **Sync OK** means the last sync completed successfully.
 
-- **Sync** applies a change from Git to the cluster.
-- **Prune** removes a managed object that was removed from Git.
-- **Self-heal** brings a manually changed cluster object back to its Git-defined setting.
+The application is configured for automatic sync, pruning, and self-healing. Pruning removes
+managed resources that were deleted from Git; self-healing returns manually changed resources to
+the Git-defined settings.
 
-The Argo CD application is private. Jenkins can reach the Argo CD API from inside the AWS network;
-the application is not exposed as a public admin website.
+[![Argo CD application tree with healthy and synced status](assets/screenshots/argocd-application-tree-full.png)](assets/screenshots/argocd-application-tree-full.png){.document-screenshot-link target=_blank rel=noopener}
 
-![Argo CD application tree with healthy and synced resources](assets/screenshots/argocd-flow.png)
+*Argo CD's application view. Operator details were removed from this public copy; the resource tree can be wider than the screen. Select the image to see the complete captured screen.*
 
-*The screenshot is sanitized to remove user identity and internal service addresses. Green
-“Healthy” and “Synced” states are the desired result.*
+The tree view shows how Kubernetes resources relate to one another. The list view gives a more
+compact status check:
 
-## Verification is part of delivery
+[![Argo CD resource list and application health summary](assets/screenshots/argocd-resource-health-full.png)](assets/screenshots/argocd-resource-health-full.png){.document-screenshot-link target=_blank rel=noopener}
 
-After pushing the GitOps update, the CD job can poll Argo CD until the application reports
-`Synced` and `Healthy`. If that does not happen within the wait window, the CD job fails so an
-operator can inspect Argo CD and the Kubernetes pods.
+*The resource list includes the application health and sync summary. Private addresses and operator identity were removed from this public copy.*
 
-The wait matters because GitOps is asynchronous: Argo CD needs a little time to notice a new
-commit and reconcile the cluster.
+## Why the Git record matters
 
-## Why not deploy by hand?
+If someone changes a deployment directly in Kubernetes, the cluster and Git no longer describe the
+same desired state. Keeping the image version in Git makes a release reviewable and gives the team
+a clear starting point for a rollback.
 
-If someone changes a deployment directly in Kubernetes, Git would no longer describe what is
-running. GitOps makes the desired version reviewable, repeatable, and easier to roll back.
+If Argo CD does not become Synced and Healthy within the delivery job's wait period, the job fails
+so an operator can inspect the sync status, application events, and Kubernetes pods.

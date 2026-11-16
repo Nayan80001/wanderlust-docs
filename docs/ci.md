@@ -1,46 +1,49 @@
-# Jenkins CI: check every change
+# Jenkins: how a change is checked
 
-CI means **continuous integration**. It is an automatic checklist that runs when application code
-changes. Jenkins runs separate pipelines for the frontend and backend.
+The frontend and backend each have a Jenkins pipeline. A pipeline is a repeatable checklist: it
+runs the same tests and scans for every change, rather than relying on someone to remember each
+step.
 
-![Jenkins dashboard showing the frontend, backend, and GitOps jobs](assets/screenshots/jenkins-dashboard.png)
+[![Full Jenkins dashboard with frontend, backend, and GitOps jobs](assets/screenshots/jenkins-dashboard-full.png)](assets/screenshots/jenkins-dashboard-full.png){.document-screenshot-link target=_blank rel=noopener}
 
-*The dashboard lists recent successful and failed builds. A green check means that particular
-build completed successfully; an older failure remains visible as useful history.*
+*A full-screen capture scrolled to show the three job rows together. Select the image to open it at original size.*
 
-## What happens in each app pipeline?
+The dashboard keeps the last successful and failed build for each job. An older failure can remain
+visible after a later success; it is retained as history, not an indication that the latest build
+failed. The image is a snapshot, so its build numbers and times will change.
 
-The frontend and backend pipelines follow the same safety-first pattern:
+## What each application pipeline does
 
-1. **Check out the code** and create a version tag from the short Git commit and build number.
-2. **Look for leaked secrets** with Gitleaks.
-3. **Scan source and dependencies** with Trivy and OWASP Dependency-Check.
-4. **Run automated tests** with Jest.
-5. **Analyze code** in SonarQube and wait for its quality gate.
-6. **Check container configuration** with Hadolint and Trivy config scanning.
-7. **Build a Docker image** and scan the finished image with Trivy.
-8. **Push the image to Amazon ECR** using the EC2 instance role.
-9. **Start the GitOps delivery job** with only the changed service's image tag.
+1. Checks out the source and creates a build version from the commit and Jenkins build number.
+2. Scans for committed secrets with Gitleaks.
+3. Checks source code and dependencies with Trivy and OWASP Dependency-Check.
+4. Runs the Jest test suite.
+5. Sends the code to SonarQube and waits for the configured quality gate.
+6. Checks container and configuration files with Hadolint and Trivy.
+7. Builds the container image and scans it with Trivy.
+8. Publishes the image to the private Amazon ECR registry.
+9. Starts the GitOps delivery job with the new image version.
 
-Some scan settings are configurable. Security scans can stop a build when a configured rule is
-violated; a red build is a signal to inspect the failed stage rather than bypass the check.
+A failed check stops the pipeline. The failed stage is the place to start investigating; repeatedly
+rerunning the whole job usually does not help until the cause is fixed.
 
-## What does the quality gate mean?
+## SonarQube quality gate
 
-SonarQube checks code for issues and evaluates the project's configured quality conditions. Jenkins
-waits for that result. If the gate fails, the CI pipeline stops before publishing a deployable
-image.
+Jenkins waits for SonarQube's result before it publishes an image. If the quality gate fails, the
+pipeline stops at that point.
 
-![SonarQube project overview showing a passed quality gate](assets/screenshots/sonarqube-quality-gate-crop.png)
+[![Full SonarQube project overview showing a passed quality gate](assets/screenshots/sonarqube-quality-gate-full.png)](assets/screenshots/sonarqube-quality-gate-full.png){.document-screenshot-link target=_blank rel=noopener}
 
-*The captured frontend overview reported “Passed.” This is a time-specific result, not a promise
-that every future commit will pass.*
+*The captured project overview shows the quality gate as “Passed.” This is the complete visible screen from that session; select the image for the original-size version.*
 
-## Image versions
+The gate applies the project's configured conditions to the analysis. A pass records the result
+for that analysis only; it is not a guarantee about a later commit.
 
-Application image tags use a short commit ID and Jenkins build number, for example
-`<short-commit>-<build-number>`. This makes it possible to connect a running version back to the
-source change and CI run.
+## Tracing an image back to its source
 
-The pipelines do not put credentials in the image tag. AWS access to ECR is provided through an
-instance role, while other sensitive values are kept in SSM or Jenkins credentials.
+Image tags contain a short commit ID and Jenkins build number, such as
+`<short-commit>-<build-number>`. That makes it possible to connect a deployed image to the source
+change and the pipeline run that built it.
+
+AWS access to ECR comes from the instance role. Other sensitive values are kept in SSM or Jenkins
+credentials; they are not placed in image tags.

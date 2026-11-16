@@ -1,50 +1,40 @@
-site_name: Wanderlust DevOps Guide
-site_description: A friendly, step-by-step guide to the Wanderlust app and its DevOps delivery system.
+site_name: Wanderlust | Project guide
+site_description: A clear overview of the Wanderlust application, its AWS architecture, and how changes reach users.
 site_url: https://nayan80001.github.io/wanderlust-docs/
-repo_url: https://github.com/Nayan80001/wanderlust-docs
-repo_name: Nayan80001/wanderlust-docs
 
 theme:
   name: material
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
-      accent: cyan
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
-      primary: indigo
-      accent: cyan
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
+      primary: blue
+      accent: teal
   features:
+    - navigation.tabs
+    - navigation.tabs.sticky
     - navigation.sections
     - navigation.indexes
     - navigation.footer
     - navigation.top
+    - search.suggest
     - search.highlight
     - content.code.copy
 
 nav:
-  - Start here:
-      - Welcome: index.md
+  - Overview: index.md
+  - Architecture:
+      - AWS and Kubernetes: architecture.md
+      - Infrastructure: infrastructure.md
+      - Configuration and access: host-configuration.md
+  - Delivery:
       - The five repositories: repositories.md
-      - Word list: glossary.md
-  - Understand the system:
-      - AWS and Kubernetes map: architecture.md
-      - Terraform infrastructure: infrastructure.md
-      - Ansible and secure access: host-configuration.md
-  - Build and deliver:
       - Local development: local-development.md
-      - Jenkins CI: ci.md
-      - GitOps and Argo CD: cd-gitops.md
+      - Jenkins checks: ci.md
+      - Release and GitOps: cd-gitops.md
+  - Operations:
       - Monitoring: monitoring.md
-  - Operate it:
-      - Checks, troubleshooting, and cleanup: operations.md
+      - Runbook and costs: operations.md
+  - Glossary: glossary.md
 
 markdown_extensions:
   - admonition
@@ -66,5 +56,8 @@ markdown_extensions:
 extra_javascript:
   - https://cdn.jsdelivr.net/npm/mermaid@11.1.0/dist/mermaid.min.js
   - assets/javascripts/mermaid-init.js
+
+extra_css:
+  - assets/stylesheets/overrides.css
 
 strict: true

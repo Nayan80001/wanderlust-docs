@@ -100,9 +100,10 @@ Important boundaries:
 
 ## AWS instance inventory
 
-This sanitized table was queried from the live AWS EC2 inventory. It intentionally omits account
-numbers, instance IDs, DNS names, and IP addresses.
+This readable inventory view is based on the live AWS EC2 inventory at capture time. It omits
+account numbers, instance IDs, DNS names, and IP addresses.
 
 ![Sanitized live AWS EC2 inventory](assets/screenshots/aws-instance-inventory.svg)
 
-The inventory is a snapshot: instances may be stopped, replaced, or resized later.
+The inventory is a snapshot: instances may be stopped, replaced, or resized later. The AWS console
+is not exposed in this public guide.
