@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="430" viewBox="0 0 1040 430" role="img" aria-labelledby="title description">
+  <title id="title">Sanitized live AWS EC2 instance inventory</title>
+  <desc id="description">Five running Wanderlust EC2 instances with their role, instance type, and Availability Zone. Account numbers, instance IDs, DNS names, and IP addresses are omitted.</desc>
+  <rect width="1040" height="430" rx="18" fill="#111827"/>
+  <rect x="0" y="0" width="1040" height="82" rx="18" fill="#172554"/>
+  <rect x="0" y="62" width="1040" height="20" fill="#172554"/>
+  <circle cx="42" cy="41" r="13" fill="#ff9900"/>
+  <text x="70" y="39" fill="#ffffff" font-family="Arial, sans-serif" font-size="24" font-weight="700">EC2 instances</text>
+  <text x="70" y="62" fill="#bfdbfe" font-family="Arial, sans-serif" font-size="14">Live AWS inventory - sanitized for public documentation</text>
+  <text x="58" y="124" fill="#93c5fd" font-family="Arial, sans-serif" font-size="15" font-weight="700">ROLE</text>
+  <text x="496" y="124" fill="#93c5fd" font-family="Arial, sans-serif" font-size="15" font-weight="700">STATE</text>
+  <text x="655" y="124" fill="#93c5fd" font-family="Arial, sans-serif" font-size="15" font-weight="700">INSTANCE TYPE</text>
+  <text x="858" y="124" fill="#93c5fd" font-family="Arial, sans-serif" font-size="15" font-weight="700">AVAILABILITY ZONE</text>
+  <g font-family="Arial, sans-serif" font-size="17" fill="#f3f4f6">
+    <rect x="32" y="143" width="976" height="48" rx="8" fill="#1f2937"/>
+    <text x="58" y="174">Jenkins</text><text x="496" y="174" fill="#86efac">Running</text><text x="655" y="174">t3.large</text><text x="858" y="174">us-west-2a</text>
+    <rect x="32" y="199" width="976" height="48" rx="8" fill="#1f2937"/>
+    <text x="58" y="230">SonarQube</text><text x="496" y="230" fill="#86efac">Running</text><text x="655" y="230">t3.large</text><text x="858" y="230">us-west-2a</text>
+    <rect x="32" y="255" width="976" height="48" rx="8" fill="#1f2937"/>
+    <text x="58" y="286">Ansible controller</text><text x="496" y="286" fill="#86efac">Running</text><text x="655" y="286">t3.small</text><text x="858" y="286">us-west-2a</text>
+    <rect x="32" y="311" width="976" height="48" rx="8" fill="#1f2937"/>
+    <text x="58" y="342">kubeadm master</text><text x="496" y="342" fill="#86efac">Running</text><text x="655" y="342">t3.medium</text><text x="858" y="342">us-west-2a</text>
+    <rect x="32" y="367" width="976" height="48" rx="8" fill="#1f2937"/>
+    <text x="58" y="398">kubeadm worker</text><text x="496" y="398" fill="#86efac">Running</text><text x="655" y="398">t3.large</text><text x="858" y="398">us-west-2b</text>
+  </g>
+</svg>

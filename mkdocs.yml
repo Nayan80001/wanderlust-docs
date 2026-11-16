@@ -1,0 +1,70 @@
+site_name: Wanderlust DevOps Guide
+site_description: A friendly, step-by-step guide to the Wanderlust app and its DevOps delivery system.
+site_url: https://nayan80001.github.io/wanderlust-docs/
+repo_url: https://github.com/Nayan80001/wanderlust-docs
+repo_name: Nayan80001/wanderlust-docs
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: cyan
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.indexes
+    - navigation.footer
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+
+nav:
+  - Start here:
+      - Welcome: index.md
+      - The five repositories: repositories.md
+      - Word list: glossary.md
+  - Understand the system:
+      - AWS and Kubernetes map: architecture.md
+      - Terraform infrastructure: infrastructure.md
+      - Ansible and secure access: host-configuration.md
+  - Build and deliver:
+      - Local development: local-development.md
+      - Jenkins CI: ci.md
+      - GitOps and Argo CD: cd-gitops.md
+      - Monitoring: monitoring.md
+  - Operate it:
+      - Checks, troubleshooting, and cleanup: operations.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/mermaid@11.1.0/dist/mermaid.min.js
+  - assets/javascripts/mermaid-init.js
+
+strict: true
