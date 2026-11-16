@@ -55,7 +55,7 @@ markdown_extensions:
           format: !!python/name:pymdownx.superfences.fence_code_format
 
 extra_javascript:
-  - assets/javascripts/mermaid-init.js
+  - assets/javascripts/mermaid-init-v2.js
   - https://cdn.jsdelivr.net/npm/mermaid@11.1.0/dist/mermaid.min.js
 
 extra_css:
