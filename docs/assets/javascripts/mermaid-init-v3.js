@@ -1,4 +1,5 @@
 const renderMermaid = () => {
+  mermaid.startOnLoad = false;
   mermaid.initialize({
     securityLevel: "strict",
     startOnLoad: false,
