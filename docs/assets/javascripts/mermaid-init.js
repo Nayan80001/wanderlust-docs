@@ -1,10 +1,10 @@
-mermaid.initialize({
-  securityLevel: "strict",
-  startOnLoad: false,
-  theme: "neutral",
-});
-
 const renderMermaid = () => {
+  mermaid.initialize({
+    securityLevel: "strict",
+    startOnLoad: false,
+    theme: "neutral",
+  });
+
   const diagrams = Array.from(document.querySelectorAll("pre.mermaid"));
   if (diagrams.length === 0) return;
 
