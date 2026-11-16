@@ -46,6 +46,24 @@
   border-radius: 0.35rem;
 }
 
+.md-typeset .mermaid {
+  width: 100%;
+  margin: 1.5rem 0 2rem;
+  padding: 0.75rem;
+  overflow-x: auto;
+  border: 1px solid #dce5e9;
+  border-radius: 0.65rem;
+  background: #f7f9fa;
+}
+
+.md-typeset .mermaid svg {
+  display: block;
+  min-width: 720px;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
 .md-typeset table:not([class]) {
   border: 1px solid #dce5e9;
   border-radius: 0.5rem;

@@ -58,6 +58,8 @@ setup for a service that needs production-grade availability or incident respons
 ## Where to go next
 
 - [See the AWS network and application path](architecture.md)
+- [Review services and their configured versions](technology-stack.md)
+- [Start the application locally](local-development.md)
 - [Follow a change through Jenkins and Argo CD](ci.md)
 - [Review monitoring and operational limits](monitoring.md)
 - [Find checks, troubleshooting steps, and cost notes](operations.md)

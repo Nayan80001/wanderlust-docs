@@ -1,102 +1,152 @@
 # AWS and Kubernetes map
 
-This page is the map of the deployed system. The AWS region is `us-west-2`. The network has one
-VPC and four subnets spread across two Availability Zones (separate AWS data-center areas).
+This page is the map of the deployed system. The AWS region is `us-west-2`. The VPC has four
+subnets across two Availability Zones (separate AWS data-center areas).
 
 ## Architecture diagram
 
 ```mermaid
-architecture-beta
-    group internet(cloud)[Public internet]
-    group aws(cloud)[AWS region us-west-2]
-    group vpc(cloud)[VPC 10.20.0.0/16] in aws
-    group public_a(server)[Public AZ A - 10.20.0.0/24] in vpc
-    group public_b(server)[Public AZ B - 10.20.1.0/24] in vpc
-    group private_a(server)[Private AZ A - 10.20.10.0/24] in vpc
-    group private_b(server)[Private AZ B - 10.20.11.0/24] in vpc
+flowchart LR
+  visitors["Website visitors"] --> dns["DNS: AWS load balancer hostname"]
+  dns --> alb["Public ALB: attached to both public subnets"]
+  alb --> ingress["Ingress NGINX: worker NodePort 30080"]
+  ingress --> frontend["Frontend pods: React + Nginx"]
+  ingress --> backend["Backend pods: Node.js + Express"]
+  frontend --> backend
+  backend --> mongo["MongoDB 7.0"]
+  backend --> redis["Redis 7.2"]
 
-    service visitors(internet)[Website visitors] in internet
-    service github(cloud)[GitHub source and GitOps] in internet
-    service alb(cloud)[Public load balancer] in vpc
-    service jenkins(server)[Jenkins - t3.large] in public_a
-    service nat(cloud)[Single NAT gateway] in public_a
-    service sonar(server)[SonarQube - t3.large] in private_a
-    service ansible(server)[Ansible - t3.small] in private_a
-    service master(server)[kubeadm master - t3.medium] in private_a
-    service worker(server)[kubeadm worker - t3.large] in private_b
-    service ingress(server)[Ingress NGINX] in private_b
-    service frontend(server)[Frontend pods] in private_b
-    service backend(server)[Backend pods] in private_b
-    service mongo(database)[MongoDB] in private_b
-    service redis(database)[Redis] in private_b
-    service argocd(server)[Argo CD] in private_b
-    service monitoring(server)[Prometheus, Grafana, Loki, Alloy] in private_b
-    service ecr(disk)[Amazon ECR] in aws
-    service s3(disk)[S3 artifacts] in aws
-    service ssm(cloud)[Systems Manager] in aws
+  github["GitHub: application and GitOps repos"] --> jenkins["Jenkins CI"]
+  jenkins --> sonar["SonarQube"]
+  jenkins --> ecr["Amazon ECR"]
+  jenkins --> gitops["GitOps repo: main"]
+  github --> gitops
+  gitops --> argocd["Argo CD: auto-sync"]
+  jenkins --> argocd
+  argocd --> frontend
+  argocd --> backend
+  worker --> ecr
+  ansible["Ansible controller"] --> ssm["AWS Systems Manager"]
+  ssm --> master["Kubernetes control plane: t3.medium"]
+  ssm --> worker["Kubernetes worker: t3.large"]
+  ansible --> s3["S3: versioned state and artifacts, separate buckets"]
+  jenkins --> s3
+  master --> nat
+  worker --> nat
+  nat --> packages["Public package registries"]
 
-    visitors:R --> L:alb
-    alb:B --> T:ingress
-    ingress:R --> L:frontend
-    frontend:R --> L:backend
-    backend:B --> T:mongo
-    backend:R --> L:redis
-    jenkins:R --> L:sonar
-    jenkins:B --> T:ecr
-    jenkins:R --> L:argocd
-    github:R --> L:jenkins
-    github:B --> T:argocd
-    ansible:R --> L:ssm
-    ssm:B --> T:master
-    ssm:R --> L:worker
-    nat:R --> L:github
-    worker:B --> T:s3
-    monitoring:R --> L:worker
+  subgraph region["AWS region us-west-2"]
+    subgraph vpc["VPC 10.20.0.0/16"]
+      alb
+      subgraph public_a["Public subnet A: 10.20.0.0/24"]
+        jenkins["Jenkins: t3.large"]
+        nat["Single NAT gateway"]
+      end
+      subgraph public_b["Public subnet B: 10.20.1.0/24"]
+        public_b_note["Second ALB availability zone"]
+      end
+      subgraph private_a["Private subnet A: 10.20.10.0/24"]
+        sonar["SonarQube: t3.large"]
+        ansible["Ansible controller: t3.small"]
+        master
+      end
+      subgraph private_b["Private subnet B: 10.20.11.0/24"]
+        worker
+        ingress
+        frontend
+        backend
+        mongo
+        redis
+        argocd["Argo CD"]
+        monitoring["Prometheus, Grafana, Loki, Alloy"]
+      end
+    end
+    ecr["Amazon ECR"]
+    s3
+    ssm
+  end
+  visitors
+  dns
+  github
+  packages
 ```
 
-The drawing is a guide, not a scale map. The load balancer spans the two public subnets. The
-Kubernetes control plane and worker machines are private. The application and monitoring pods run
-on the worker node in this single-worker lab cluster.
+The drawing is a guide, not a scale map. The ALB is attached to both public subnets. Jenkins and
+the single NAT gateway are in public subnet A. SonarQube, Ansible, and the Kubernetes control
+plane are in private subnet A. The Kubernetes worker is in private subnet B; the application and
+monitoring pods run on that one worker.
+
+## Component breakdown
+
+| Component | What it does |
+|---|---|
+| Application Load Balancer (ALB) | Receives website traffic and forwards it to the worker's application NodePort |
+| Ingress NGINX | Routes a request to the website or API inside Kubernetes |
+| Frontend | React website served by an unprivileged Nginx container |
+| Backend | Node.js and Express API |
+| MongoDB and Redis | Store application data and provide the configured cache/session service |
+| Jenkins | Runs code checks, builds and scans images, pushes approved images to ECR |
+| SonarQube | Analyzes source code and returns the quality-gate result to Jenkins |
+| Argo CD | Reads the GitOps repository and reconciles Kubernetes with its declared settings |
+| Ansible | Installs and configures services on the EC2 instances through SSM |
+| Prometheus, Grafana, Loki, and Alloy | Collect metrics, show dashboards, and ship logs into the log store |
+| Terraform | Describes the AWS network, instances, IAM, registry, and storage resources |
+| Amazon ECR and S3 | Store container images, infrastructure state, and CI artifacts in separate resources |
 
 ## Subnets and important AWS resources
 
 | Network area | CIDR block | Main purpose |
 |---|---|---|
 | VPC | `10.20.0.0/16` | Private address space for the project |
-| Public subnet A | `10.20.0.0/24` | Load-balancer entry point, Jenkins, and the NAT gateway |
-| Public subnet B | `10.20.1.0/24` | Second Availability Zone for the load balancer |
+| Public subnet A | `10.20.0.0/24` | Jenkins and the NAT gateway |
+| Public subnet B | `10.20.1.0/24` | Second Availability Zone used by the ALB |
 | Private subnet A | `10.20.10.0/24` | SonarQube, Ansible, and the Kubernetes control plane |
 | Private subnet B | `10.20.11.0/24` | Kubernetes worker, application pods, and monitoring |
 
 The internet gateway connects the public route table to the internet. Private subnets use one NAT
-gateway for outbound downloads and updates; they do not get direct inbound internet routes. An S3
-gateway endpoint lets the VPC reach S3 without sending that traffic through the NAT gateway.
+gateway for outbound downloads and updates; they do not have direct inbound internet routes. An
+S3 gateway endpoint lets the VPC reach S3 without sending that traffic through the NAT gateway.
+The NAT gateway is a single point of failure and can continue to incur charges while the lab is
+running.
 
 ## What happens to a web request?
 
-1. A visitor opens the website.
-2. The public Application Load Balancer (ALB) sends HTTP traffic to the Kubernetes worker's
-   NodePort `30080`.
+1. A visitor opens the website using the ALB hostname (or the configured custom domain).
+2. The public ALB forwards traffic to the Kubernetes worker's NodePort `30080`.
 3. Ingress NGINX chooses the frontend or backend service.
 4. The backend talks to MongoDB and Redis inside the cluster.
-5. The security groups only allow the ALB to reach the worker's application NodePort.
+5. The security groups allow the ALB to reach the worker's application NodePort, not every server.
 
-The ALB is the front door. It is not the same thing as opening every EC2 server to the internet.
+The default configuration leaves `domain_name` empty, so the site uses the ALB DNS hostname over
+HTTP. A custom domain can add a Route 53 alias and an ACM certificate for HTTPS. Do not assume
+HTTPS is active unless the domain and certificate have been configured and the ALB listener has
+been verified.
 
-## How administrators reach services
+## Network and security boundaries
+
+| Connection | Intended access |
+|---|---|
+| Public internet to ALB | Web traffic on ports 80 and 443; an HTTPS listener depends on domain/certificate configuration |
+| ALB to Kubernetes worker | Application NodePort `30080` only |
+| Jenkins to SonarQube | SonarQube web/API port `9000` |
+| Jenkins to Argo CD | Argo CD NodePort `32080` for release verification |
+| Operator to EC2 administration | AWS Systems Manager Session Manager; SSH/port 22 is not opened |
+| Public internet to Jenkins | Restricted by the configured allowlist; the actual allowed addresses are intentionally not published |
+| Public internet to Grafana, SonarQube, or Argo CD | No direct public admin route is intended |
+
+Jenkins is in a public subnet, but its inbound access is restricted. SonarQube and Argo CD accept
+administrative traffic from Jenkins rather than from arbitrary internet hosts. Grafana is a
+cluster-internal service.
+
+EC2 instance profiles provide the machine permissions used by the deployment. Depending on the
+role, these include Systems Manager registration and command/session access, CloudWatch agent
+publishing, scoped reads of encrypted Parameter Store values, S3 artifact access, and ECR image
+push or pull. Human operators still need an AWS identity with the appropriate SSM and project
+permissions; an instance role is not a substitute for operator authorization.
 
 SSH port 22 is not opened. AWS Systems Manager (SSM) Session Manager is the supported path for
-administrative sessions and port forwarding. Jenkins, SonarQube, Argo CD, and Grafana are not
-documented here with direct public admin links.
-
-Important boundaries:
-
-- Jenkins is placed in a public subnet, but inbound access is restricted by security-group rules;
-  operators use SSM.
-- SonarQube accepts its web traffic from Jenkins only.
-- Argo CD's private NodePort is reachable from Jenkins only.
-- Grafana is a cluster-internal service, not a public website.
-- The EKS Terraform module is parked for a future phase; EKS is not part of this deployment.
+administrative sessions and port forwarding. The EKS Terraform module is parked for a future
+phase; this deployment uses a kubeadm cluster, not EKS.
 
 ## AWS instance inventory
 

@@ -24,6 +24,7 @@ nav:
   - Overview: index.md
   - Architecture:
       - AWS and Kubernetes: architecture.md
+      - Technology stack: technology-stack.md
       - Infrastructure: infrastructure.md
       - Configuration and access: host-configuration.md
   - Delivery:

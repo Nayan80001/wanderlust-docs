@@ -22,6 +22,14 @@ The application is configured for automatic sync, pruning, and self-healing. Pru
 managed resources that were deleted from Git; self-healing returns manually changed resources to
 the Git-defined settings.
 
+## Deployment strategy
+
+The application uses Kubernetes `RollingUpdate` deployments. Each service currently has one
+replica, with `maxUnavailable: 0` and `maxSurge: 1`: Kubernetes keeps the existing pod while it
+tries to bring up the new one, then replaces it after the new pod is ready. This is a rolling
+update, not a blue/green or canary release. A PodDisruptionBudget is not enabled, and both
+application services share one worker, so this is not a high-availability guarantee.
+
 [![Argo CD application tree with healthy and synced status](assets/screenshots/argocd-application-tree-full.png)](assets/screenshots/argocd-application-tree-full.png){.document-screenshot-link target=_blank rel=noopener}
 
 *Argo CD's application view. Operator details were removed from this public copy; the resource tree can be wider than the screen. Select the image to see the complete captured screen.*
@@ -41,3 +49,30 @@ a clear starting point for a rollback.
 
 If Argo CD does not become Synced and Healthy within the delivery job's wait period, the job fails
 so an operator can inspect the sync status, application events, and Kubernetes pods.
+
+The `Verify ArgoCD sync` stage runs only when both `VERIFY_ARGOCD=true` and `ARGOCD_URL` are set in
+the Jenkins job environment. The Ansible-managed Jenkins configuration sets both values for this
+project. The stage also needs a valid `argocd-token` credential. If Jenkins marks this stage as
+skipped, check that the latest Jenkins configuration was applied and that the URL and credential
+are present; a skipped stage does not prove that the deployment is healthy.
+
+## Roll back an application release
+
+The GitOps repository is the source of truth. Do not roll back by changing a running pod with
+`kubectl`; Argo CD will reconcile it back to the version in Git.
+
+1. Find the last known-good image tag in the Jenkins history or the GitOps commit history.
+2. In `wanderlust-gitops`, restore only the failed service's image tag in
+   `helm/wanderlust/values-prod.yaml` to that known-good tag. Keep the other service's tag
+   unchanged.
+3. Review the diff, commit the rollback to `main`, and push it.
+4. Wait for Argo CD to report **Synced** and **Healthy** and for the replacement pod to become
+   Ready. Confirm the website and API health check.
+
+If the failed release is the latest GitOps commit and contains only the intended tag update, an
+authorized operator can use `git revert <release-commit>` instead of editing the tag manually.
+Do not force-push or rewrite the shared `main` branch.
+
+For an infrastructure change, restore the Terraform configuration in Git, create and review a
+new Terraform plan, then apply it only with approval. Do not manually edit or restore the remote
+state file as a shortcut.

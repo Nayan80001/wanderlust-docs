@@ -15,6 +15,16 @@ network and servers can be reviewed and recreated consistently.
 
 Terraform does not install all application software. That is Ansible's job.
 
+## Where the Terraform state lives
+
+The production environment uses a remote S3 backend. The state bucket is versioned, encrypted,
+blocked from public access, and protected against accidental destroy. Terraform uses an S3-native
+lock file (`use_lockfile`) so two operators do not update the same state at the same time. The
+bucket and account-specific values are intentionally not included in this public guide.
+
+The state file can contain sensitive infrastructure data. Do not copy it into Git, publish a plan
+file, or delete the state bucket as part of ordinary cleanup.
+
 ## Instance sizes
 
 The current documented lab uses the following EC2 sizes:
@@ -37,22 +47,25 @@ Terraform should show its proposed changes before it makes them. Work from the p
 apply or destroy command.
 
 ```powershell
-terraform init
+cd .\wanderlust-infra
 terraform fmt -check -recursive
-terraform validate
-terraform plan -var-file=prod.tfvars -out=tfplan
-terraform show tfplan
+terraform -chdir=envs/prod init
+terraform -chdir=envs/prod validate
+terraform -chdir=envs/prod plan -var-file=prod.tfvars -out=tfplan
+terraform -chdir=envs/prod show tfplan
 ```
 
 Only after reviewing the plan and confirming every creation, update, and deletion should an
 authorized operator apply it:
 
 ```powershell
-terraform apply tfplan
+terraform -chdir=envs/prod apply tfplan
 ```
 
-Do not use `-auto-approve` for this lab. The Terraform state bucket is versioned and protected;
-preserve it while the state may still be needed.
+Before running these commands, confirm the active AWS profile, account, and `us-west-2` region.
+Plan files can contain sensitive values: keep `tfplan` private and do not commit it. Do not use
+`-auto-approve` for this lab. Preserve the protected, versioned state bucket while the state may
+still be needed.
 
 ## Cost awareness
 
